@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: stockwise
+      POSTGRES_PASSWORD: stockwise
+      POSTGRES_DB: stockwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - stockwise_pg:/var/lib/postgresql/data
+
+volumes:
+  stockwise_pg:
