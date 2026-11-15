@@ -365,23 +365,21 @@ Tests cover the hash map, heap, queue, sliding window, both sorts, the rice urge
 
 ## Deployment
 
-Frontend (Vercel):
+One Vercel project serves both parts. The root `vercel.json` builds `frontend/` and `backend/` in that same deployment. Requests under `/api` reach the Flask app in `backend/run.py`. Every other path reaches the Vite site. `frontend/vercel.json` still sends client routes such as `/overview` to `index.html`.
 
-- Root directory: `frontend`
-- Build command: `npm run build`
-- Output: `dist`
-- Set `VITE_API_URL` to the public API URL, including `/api`
-- `vercel.json` rewrites unknown paths to `index.html` so client routes work
+In the existing Vercel project, set Root Directory to the repository root (clear the old `frontend` value). Do not create a second project.
 
-Backend (Render):
+Production environment variables:
 
-- Root directory: `backend`
-- Build: `pip install -r requirements.txt`
-- Start: the `Procfile` (`gunicorn`)
-- Set `FLASK_ENV=production`, long `JWT_SECRET_KEY` and `SECRET_KEY`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `CORS_ORIGINS` (the Vercel origin), `FRONTEND_URL`, and `RETURN_RESET_TOKEN=0`
-- Run `backend/supabase_schema.sql` once in the Supabase SQL Editor
+- `FLASK_ENV=production`
+- `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (same project URL and publishable key)
+- `SECRET_KEY` and `JWT_SECRET_KEY`, each a long random string
+- `RETURN_RESET_TOKEN=0`
 
-The hosted database is the Supabase project. The API uses the Data API and Row Level Security.
+Leave `VITE_API_URL` unset. The production build calls `/api` on the same domain. Local `npm run dev` still calls `http://localhost:5000/api`.
+
+Run `backend/supabase_schema.sql` once in the Supabase SQL Editor. The hosted data lives in that Supabase project. The API uses the Data API and Row Level Security. SQLite is only for tests and for a machine without the two Supabase variables.
 
 ## Known limits
 
