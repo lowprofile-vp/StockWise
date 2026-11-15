@@ -228,3 +228,12 @@ def test_optimizer_endpoint_prefers_higher_total_when_algorithms_differ():
     # Covered directly in test_greedy_can_miss_the_knapsack_optimum. This test
     # only checks the HTTP contract stays available to an owner.
     assert Decimal("10") > Decimal("7")
+
+
+def test_service_root_is_reachable_and_api_stays_under_api(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert b"The requested URL was not found" not in page.data
+    health = client.get("/api/health")
+    assert health.status_code == 200
+    assert health.get_json()["service"] == "stockwise"

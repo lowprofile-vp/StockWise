@@ -2,8 +2,9 @@
 
 from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 
-from flask import Flask, g, has_request_context, jsonify
+from flask import Flask, abort, g, has_request_context, jsonify, send_from_directory
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -51,6 +52,7 @@ def create_app(config_name=None):
     _register_jwt_callbacks(jwt)
     _register_error_handlers(app)
     _register_blueprints(app)
+    _register_frontend(app)
     _register_commands(app)
     _ensure_supabase_column(app)
     _register_data_api(app)
@@ -76,6 +78,38 @@ def _register_data_api(app):
             from app.data.api import reset_uow
 
             reset_uow(token)
+
+
+def _register_frontend(app):
+    """Serve the built React app from the same host as the API.
+
+    Render opens `/` when someone clicks the service URL. The API routes all
+    live under `/api`, so without this the click is Flask's generic 404.
+    """
+    dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    index = dist / "index.html"
+
+    @app.get("/", defaults={"path": ""})
+    @app.get("/<path:path>")
+    def frontend_files(path):
+        if path == "api" or path.startswith("api/"):
+            abort(404)
+        if index.is_file():
+            candidate = (dist / path).resolve() if path else None
+            if candidate is not None and candidate.is_file() and dist.resolve() in candidate.parents:
+                return send_from_directory(dist, path)
+            return send_from_directory(dist, "index.html")
+        return (
+            jsonify(
+                {
+                    "service": "stockwise",
+                    "status": "ok",
+                    "error": "The API is running. This deploy has no website build yet.",
+                    "health": "/api/health",
+                }
+            ),
+            200,
+        )
 
 
 def _register_blueprints(app):

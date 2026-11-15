@@ -365,7 +365,16 @@ Tests cover the hash map, heap, queue, sliding window, both sorts, the rice urge
 
 ## Deployment
 
-One Vercel project serves both parts. The root `vercel.json` builds `frontend/` and `backend/` in that same deployment. Requests under `/api` reach the Flask app in `backend/run.py`. Every other path reaches the Vite site. `frontend/vercel.json` still sends client routes such as `/overview` to `index.html`.
+Render (one service, the URL you open in the browser):
+
+- Use the existing service. Do not create a second one.
+- Root Directory `backend`: Build Command `bash ../build.sh`. Leave the start command as the Procfile (`gunicorn --bind 0.0.0.0:$PORT run:app`).
+- Root Directory blank (the repository): Build Command `bash build.sh`. Start Command `gunicorn --chdir backend --bind 0.0.0.0:$PORT run:app`.
+- `build.sh` installs the API and builds the React site. Flask then serves that site at `/` and the API at `/api`.
+- Set `FLASK_ENV=production`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (the same URL and publishable key), `SECRET_KEY`, `JWT_SECRET_KEY`, and `RETURN_RESET_TOKEN=0`. The `VITE_` values must be present before the build.
+- Run `backend/supabase_schema.sql` once in the Supabase SQL Editor.
+
+One Vercel project can serve both parts instead. The root `vercel.json` builds `frontend/` and `backend/` in that same deployment. Requests under `/api` reach the Flask app in `backend/run.py`. Every other path reaches the Vite site. `frontend/vercel.json` still sends client routes such as `/overview` to `index.html`.
 
 In the existing Vercel project, set Root Directory to the repository root (clear the old `frontend` value). Do not create a second project.
 
